@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Restaurant Management System</title>
+<meta name="description" content="Restaurant Management System (Single-file demo). Admin & Customer flows — localStorage demo." />
+
+<style>
+  /* --------------------------
+     RMS Single-file CSS
+     Soft pastel palette, accessible contrast
+     -------------------------- */
+  :root{
+    --bg: #fbf9f6;
+    --card: #ffffff;
+    --muted: #9aa4a6;
+    --accent: #9ad3f5; /* soft blue */
+    --accent-2: #ffd7c2; /* soft peach */
+    --accent-3: #fff7e6; /* ivory */
+    --shadow: 0 6px 18px rgba(20,30,40,0.06);
+    --radius-pill: 14px;
+    --radius-lg: 12px;
+    --radius-sm: 8px;
+    --focus: 3px solid rgba(154,211,245,0.5);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background: linear-gradient(180deg,var(--accent-3),var(--bg));
+    color:#20343a;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  
+background-image: url('background.jpg'); /* Replace with your image URL */
+  background-size: cover;        /* Ensures the image covers the whole screen */
+  background-position: center;   /* Keeps image centered */
+  background-attachment: fixed;  /* Keeps background fixed on scroll */
+  background-repeat: no-repeat;  /* Prevents tiling */
+  
+  /* Optional: overlay color for readability */
+  /* background-color: rgba(255, 255, 255, 0.85); */
+  /* background-blend-mode: overlay; */
+}
+
+  /* Layout containers */
+  .app{
+    max-width:1200px;
+    margin:24px auto;
+    padding:18px;
+    box-sizing:border-box;
+  }
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:var(--shadow);
+    color:#0b2b32;
+    font-weight:700;
+  }
+  h1{ font-size:18px; margin:0; }
+  p.lead{ margin:0; color:var(--muted); font-size:13px; }
+
+  /* Page area */
+  .page{
+    background:transparent;
+    min-height:60vh;
+  }
+
+  /* Image-button (large) */
+  .img-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+    align-items:start;
+  }
+
+  .img-btn{
+    background:var(--card);
+    border-radius:var(--radius-lg);
+    padding:12px;
+    text-align:center;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    border:1px solid rgba(20,30,40,0.03);
+    transition: transform .18s ease, box-shadow .18s ease;
+    position:relative;
+    overflow:hidden;
+    outline:none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .img-btn:focus{ box-shadow: var(--shadow); border-color:rgba(154,211,245,0.45); }
+  .img-btn .media{
+    width:100%;
+    height:140px;
+    border-radius:8px;
+    object-fit:cover;
+    background:linear-gradient(180deg, #f3fbff, #fff);
+    display:block;
+    box-shadow:0 8px 20px rgba(10,20,30,0.04);
+    margin-bottom:10px;
+  }
+  .img-btn .label{
+    font-weight:600;
+    font-size:15px;
+  }
+  /* hover animation */
+  .img-btn:hover{ transform:translateY(-6px) scale(1.01); box-shadow: 0 18px 36px rgba(20,30,40,0.08); }
+  /* click ripple/scale */
+  .img-btn:active{ transform:scale(.99) translateY(-2px); }
+
+  /* smaller variant for admin dashboard */
+  .img-btn.small .media{ height:96px; border-radius:8px; }
+  .img-btn.small{ padding:10px; border-radius:12px; }
+
+  /* utility rows */
+  .row{ display:flex; gap:12px; align-items:center; }
+  .spacer{ flex:1; }
+
+  /* Card */
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    padding:12px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(20,30,40,0.03);
+  }
+
+  /* Menu list style */
+  .menu-list{ display:grid; gap:10px; margin-top:12px; }
+  .menu-item{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    padding:10px;
+    border-radius:10px;
+    transition:background .12s;
+  }
+  .menu-item .thumb{ width:84px; height:64px; border-radius:8px; object-fit:cover; box-shadow:0 6px 14px rgba(10,20,25,0.04); }
+  .menu-item .meta{ flex:1; display:flex; flex-direction:column; gap:6px; }
+  .menu-item .meta .name{ font-weight:600; }
+  .menu-item .meta .sub{ color:var(--muted); font-size:13px; }
+.app-container {
+ background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px; /* keeps app centered and neat */
+  min-height: 90vh;  /* fills most of the screen */
+}
+  /* small controls */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:var(--radius-pill);
+    border:none;
+    background:var(--accent);
+    color:#042426;
+    cursor:pointer;
+    font-weight:600;
+    box-shadow:0 8px 18px rgba(10,20,25,0.04);
+  }
+  .btn.secondary{ background:var(--accent-2); }
+  .btn.ghost{ background:transparent; border:1px solid rgba(20,30,40,0.06); color:var(--muted); }
+  .btn:focus{ outline:none; box-shadow:var(--focus); }
+
+  /* form controls */
+  input[type="text"], input[type="number"], textarea, select {
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid rgba(10,20,25,0.08);
+    outline:none;
+    font-size:14px;
+    background: #fff;
+  }
+  input:focus, textarea:focus, select:focus { box-shadow:var(--focus); }
+
+  /* Order cards */
+  .orders-grid{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .order-card{
+    padding:10px;
+    border-radius:10px;
+    background:linear-gradient(180deg,#fff,#fcffff);
+    border:1px solid rgba(10,20,25,0.04);
+  }
+  .tag{ font-size:12px; padding:4px 8px; border-radius:999px; }
+
+  /* Table cards */
+  .tables-grid{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); }
+  .table-card{
+    padding:12px; border-radius:10px; text-align:center;
+    background:var(--card); box-shadow:var(--shadow);
+    cursor:pointer; transition:transform .12s;
+  }
+  .table-card.booked{ opacity:.45; filter:grayscale(.2) blur(.2px); transform:scale(.995); pointer-events:auto; }
+  .table-card:hover{ transform:translateY(-6px); }
+
+  /* Reviews */
+  .review{ padding:10px; border-radius:10px; background:#fff; border:1px solid rgba(10,20,25,0.03); }
+
+  /* Notifications topbar */
+  .notif-btn{ position:relative; }
+  .badge{
+    position:absolute; top:-6px; right:-6px;
+    background:#f24e1e; color:#fff;
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    border-radius:999px; font-size:12px; font-weight:700;
+    box-shadow:0 6px 12px rgba(10,20,25,0.12);
+  }
+  .notif-list{
+    position:fixed; right:18px; top:82px; width:320px;
+    max-height:72vh; overflow:auto; z-index:999;
+    border-radius:12px; padding:12px; background:var(--card); box-shadow:0 18px 40px rgba(10,20,25,0.12);
+  }
+
+  /* small helpers */
+  .muted{ color:var(--muted); font-size:13px; }
+  .kbd{ background:#f2f6f7; border-radius:6px; padding:4px 8px; font-weight:700; font-size:12px; }
+
+  /* responsive adjustments */
+  @media (max-width:640px){
+    .img-btn .media{ height:120px; }
+    header { flex-direction:column; align-items:flex-start; gap:10px; }
+    .app{ margin:12px; padding:12px; }
+  }
+
+  /* transitions between views */
+  .view{ display:none; opacity:0; transform:translateY(6px); transition:all .28s cubic-bezier(.2,.9,.3,1); }
+  .view.active{ display:block; opacity:1; transform:none; }
+
+  /* focus indicators for interactive divs */
+  [role="button"]:focus{ outline: none; box-shadow: var(--focus); }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <div class="app" id="app">
+    <header>
+      <div class="brand" aria-hidden="false">
+        <div class="logo" aria-hidden="true">R</div>
+        <div>
+          <h1>Restaurant Management System</h1>
+          
+        </div>
+      </div>
+
+      <div class="row" role="toolbar" aria-label="Primary toolbar">
+        <!--<button id="exportBtn" class="btn ghost" title="Export menu JSON (optional)">Export</button>
+        <button id="importBtn" class="btn ghost" title="Import menu JSON (optional)">Import</button>--!>
+       <!-- <button id="resetBtn" class="btn ghost" title="Reset demo data">Reset</button>--!>
+
+        <div style="width:10px"></div>
+
+        <div class="notif-btn" aria-live="polite" id="headerNotifWrapper" style="display:none;">
+          <button id="openNotifs" class="btn ghost" aria-haspopup="true" aria-expanded="false" aria-controls="notifList" title="Notifications">
+            <!-- Bell icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#20343a" d="M12 2a6 6 0 00-6 6v4l-1.5 2H19.5L18 12V8a6 6 0 00-6-6zM12 22a2.5 2.5 0 002.45-2H9.55A2.5 2.5 0 0012 22z"/></svg>
+            <span class="muted" style="font-size:13px;">Notifs</span>
+            <span id="notifBadge" class="badge" style="display:none">0</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page" id="mainContent" tabindex="-1">
+
+      <!-- =========================
+           HOME VIEW (default)
+           ========================= -->
+      <section id="homeView" class="view active" aria-labelledby="homeTitle">
+        <h2 id="homeTitle" class="muted">Choose your mode</h2>
+        <div class="img-grid" style="margin-top:14px;">
+          <!-- ADMIN_IMG_LINK -->
+          <div class="img-btn" role="button" tabindex="0" id="btnAdmin" data-image-link="administrator.jpg" aria-label="Administrator">
+            <img class="media" alt="Administrator" src="" onerror="this.style.background='linear-gradient(180deg,#ffefeb,#ffd7c2)'; this.src='administrator.jpg';" />
+            <div class="label">Administrator</div>
+          </div>
+
+          <!-- CUSTOMER_IMG_LINK -->
+          <div class="img-btn" role="button" tabindex="0" id="btnCustomer" data-image-link="customer.jpg" aria-label="Customer">
+            <img class="media" alt="Customer" src="administartor.jpg" onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='customer.jpg';" />
+            <div class="label">Customer</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================
+           ADMIN LOGIN MODAL
+           ========================= -->
+      <div id="adminLoginModal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:1200; align-items:center; justify-content:center;">
+        <div class="card" style="width: min(420px, 94%);">
+          <h3 style="margin-top:0;">Administrator Login</h3>
+          <form id="adminLoginForm" onsubmit="return false;" aria-label="Administrator login form">
+            <label for="adminUser">Username</label>
+            <input id="adminUser" type="text" value=""  required aria-required="true" />
+            <div style="height:8px"></div>
+            <label for="adminPass">Password</label>
+            <input id="adminPass" type="password" value="" " required aria-required="true" />
+            <div style="height:12px"></div>
+            <div class="row" style="justify-content:space-between;">
+              <button type="submit" id="adminLoginBtn" class="btn">Sign in</button>
+              <button type="button" id="adminCancelBtn" class="btn secondary">Cancel</button>
+            </div>
+            <div style="height:8px"></div>
+            <div id="loginError" class="muted" style="color:#b14e4e; display:none;"></div>
+            <div style="height:8px"></div>
+            
+          </form>
+        </div>
+      </div>
+
+      <!-- =========================
+           ADMIN DASHBOARD VIEW
+           ========================= -->
+      <section id="adminDashboard" class="view" aria-labelledby="adminTitle" tabindex="0">
+        <h2 id="adminTitle">Administrator Dashboard</h2>
+        <div style="height:10px"></div>
+
+        <div class="img-grid">
+          <!-- Orders -->
+          <div class="img-btn small" role="button" tabindex="0" id="adminOrdersBtn" data-image-link="orders.jpg" aria-label="Orders">
+  <img class="media" alt="Orders" src="orders.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='orders.jpg';" />
+  <div class="label">Orders</div>
+</div>
+
+          <!-- Menu -->
+          <div class="img-btn small" role="button" tabindex="0" id="adminMenuBtn" data-image-link="menu.jpg" aria-label="Menu">
+  <img class="media" alt="Menu" src="menu.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='menu.jpg';" />
+  <div class="label">Menu</div>
+</div>
+
+          <!-- Tables -->
+          <div class="img-btn small" role="button" tabindex="0" id="adminTablesBtn" data-image-link="tables.jpg" aria-label="Tables">
+  <img class="media" alt="Tables" src="tables.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='booktable.jpg';" />
+  <div class="label">Tables</div>
+</div>
+
+          <!-- Reviews -->
+          <div class="img-btn small" role="button" tabindex="0" id="adminReviewsBtn" data-image-link="reviews.jpg" aria-label="Reviews">
+  <img class="media" alt="Reviews" src="reviews.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='review.jpg';" />
+  <div class="label">Reviews</div>
+</div>
+
+          <!-- Notifications -->
+          <div class="img-btn small" role="button" tabindex="0" id="adminNotifsBtn" data-image-link="notifications.jpg" aria-label="Notifications">
+  <img class="media" alt="Notifications" src="notifications.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='notification.jpg';" />
+  <div class="label">Notifications</div>
+</div>
+
+        </div>
+
+        <div style="height:16px"></div>
+        <div id="adminContentArea"></div>
+
+        <div style="height:18px"></div>
+        <div class="row">
+          <button id="adminLogoutBtn" class="btn secondary">Log out</button>
+          <div class="spacer"></div>
+          <button id="adminBackHome" class="btn ghost">Back to Home</button>
+        </div>
+      </section>
+
+      <!-- =========================
+           CUSTOMER WELCOME & DASHBOARD
+           ========================= -->
+      <section id="customerWelcome" class="view" aria-labelledby="custWelcomeTitle" tabindex="0">
+        <h2 id="custWelcomeTitle">Welcome, Guest</h2>
+        <div style="height:12px"></div>
+
+        <!-- CUSTOMER_WELCOME_IMG -->
+        <div class="card" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+          <img id="customerWelcomeImg" alt="Welcome" style="width:100%; max-width:520px; border-radius:12px; height:240px; object-fit:cover;" src="customerwelcome.jpg" />
+          <p class="muted" style="text-align:center;">Welcome to the demo Customer flow — you'll be redirected to your dashboard shortly.</p>
+        </div>
+      </section>
+
+      <section id="customerDashboard" class="view" aria-labelledby="custTitle" tabindex="0">
+        <h2 id="custTitle">Customer Dashboard</h2>
+        <div style="height:12px"></div>
+        <div class="img-grid">
+          <div class="img-btn small" role="button" tabindex="0" id="custMenuBtn" data-<div class="img-btn small" role="button" tabindex="0" id="custMenuBtn" data-image-link="menu.jpg" aria-label="Menu">
+  <img class="media" alt="Menu" src="menu.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='menu.jpg';" />
+  <div class="label">Menu</div>
+</div>
+
+          <div class="img-btn small" role="button" tabindex="0" id="custBookBtn" data-image-link="CUST_BOOK_IMG" aria-label="Book Table">
+  <img class="media" alt="Book Table" src="booking.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='booktable.jpg';" />
+  <div class="label">Book Table</div>
+</div>
+
+         <div class="img-btn small" role="button" tabindex="0" id="custReviewsBtn" data-image-link="reviews.jpg" aria-label="Reviews">
+  <img class="media" alt="Reviews" src="reviews.jpg"
+       onerror="this.style.background='linear-gradient(180deg,#eef9ff,#9ad3f5)'; this.src='review.jpg';" />
+  <div class="label">Reviews</div>
+</div>
+
+        </div>
+
+        <div style="height:12px"></div>
+        <div id="custContentArea"></div>
+
+        <div style="height:18px"></div>
+        <div class="row">
+          <button id="custBackHome" class="btn ghost">Back to Home</button>
+        </div>
+      </section>
+
+      <!-- =========================
+           NOTIFICATION POPUP (Dynamic)
+           ========================= -->
+      <div id="notifList" style="display:none;" aria-hidden="true"></div>
+
+      <!-- =========================
+           Hidden templates & dialogs (simple inline forms)
+           ========================= -->
+      <template id="menuItemFormTpl">
+        <div class="card">
+          <h3>Menu item</h3>
+          <label>Image URL</label>
+          <input type="text" id="mi_img" placeholder="PASTE IMAGE URL (replace placeholder)"/>
+          <label style="margin-top:6px">Name</label>
+          <input type="text" id="mi_name" />
+          <label style="margin-top:6px">Category</label>
+          <input type="text" id="mi_category" placeholder="Breakfast / Lunch / Dinner / Snacks / Drinks / Cuisines" />
+          <label style="margin-top:6px">Price (₹)</label>
+          <input type="number" id="mi_price" step="0.01" />
+          <div style="height:8px"></div>
+          <div class="row">
+            <label style="display:flex;align-items:center; gap:8px;">
+              <input type="checkbox" id="mi_nonveg"/> <span>Non-veg (🔺)</span>
+            </label>
+            <div class="spacer"></div>
+            <label style="display:flex;align-items:center; gap:8px;">
+              <input type="checkbox" id="mi_avail" checked/> <span>Available</span>
+            </label>
+          </div>
+          <div style="height:10px"></div>
+          <div class="row">
+            <button id="mi_save" class="btn">Save</button>
+            <button id="mi_cancel" class="btn secondary">Cancel</button>
+            <div class="spacer"></div>
+            <button id="mi_delete" class="btn ghost" style="display:none;">Delete</button>
+          </div>
+        </div>
+      </template>
+
+    </main>
+  </div>
+
+<script>
+/* =========================
+   RMS Single-file JavaScript
+   - Modular functions
+   - localStorage persistence
+   - Accessible controls
+   - Menu seeded with user-provided dataset (Breakfast, Lunch, Dinner, Snacks, Cuisines, Drinks)
+   ========================= */
+
+(() => {
+  // ---- Keys for localStorage
+  const LS_KEYS = {
+    MENU: 'rms_menu_v1',
+    ORDERS: 'rms_orders_v1',
+    TABLES: 'rms_tables_v1',
+    REVIEWS: 'rms_reviews_v1',
+    NOTIFS: 'rms_notifs_v1'
+  };
+
+  // ---- Demo admin credentials
+  const ADMIN_CRED = { user: 'meghana', pass: 'meghana21' };
+
+  // ---- DOM refs
+  const homeView = document.getElementById('homeView');
+  const adminDashboard = document.getElementById('adminDashboard');
+  const adminContentArea = document.getElementById('adminContentArea');
+  const customerWelcome = document.getElementById('customerWelcome');
+  const customerWelcomeImg = document.getElementById('customerWelcomeImg');
+  const customerDashboard = document.getElementById('customerDashboard');
+  const custContentArea = document.getElementById('custContentArea');
+
+  const btnAdmin = document.getElementById('btnAdmin');
+  const btnCustomer = document.getElementById('btnCustomer');
+  const adminLoginModal = document.getElementById('adminLoginModal');
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  const adminLoginBtn = document.getElementById('adminLoginBtn');
+  const adminCancelBtn = document.getElementById('adminCancelBtn');
+  const loginError = document.getElementById('loginError');
+
+  const adminOrdersBtn = document.getElementById('adminOrdersBtn');
+  const adminMenuBtn = document.getElementById('adminMenuBtn');
+  const adminTablesBtn = document.getElementById('adminTablesBtn');
+  const adminReviewsBtn = document.getElementById('adminReviewsBtn');
+  const adminNotifsBtn = document.getElementById('adminNotifsBtn');
+
+  const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+  const adminBackHome = document.getElementById('adminBackHome');
+
+  const custMenuBtn = document.getElementById('custMenuBtn');
+  const custBookBtn = document.getElementById('custBookBtn');
+  const custReviewsBtn = document.getElementById('custReviewsBtn');
+  const custBackHome = document.getElementById('custBackHome');
+
+  const openNotifs = document.getElementById('openNotifs');
+  const notifBadge = document.getElementById('notifBadge');
+  const notifList = document.getElementById('notifList');
+  const headerNotifWrapper = document.getElementById('headerNotifWrapper');
+
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  // ---- In-memory state (also backed by localStorage)
+  let state = {
+    menu: [],
+    orders: [],
+    tables: [], // {id, number, bookedBy, bookedAt}
+    reviews: [],
+    notifs: []
+  };
+
+  // admin logged state
+  let isAdmin = false;
+
+  // ---- Utilities
+  function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+  function nowISO(){ return (new Date()).toISOString(); }
+  function saveLS(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function loadLS(key, fallback){ try { const v = JSON.parse(localStorage.getItem(key)); return v || fallback; } catch(e){ return fallback; } }
+
+  // ---- Initialize sample data if none present
+  function seedDataIfNeeded(){
+    const existing = loadLS(LS_KEYS.MENU, null);
+    if(existing && existing.length) {
+      // load all from storage
+      state.menu = loadLS(LS_KEYS.MENU, []);
+      state.orders = loadLS(LS_KEYS.ORDERS, []);
+      state.tables = loadLS(LS_KEYS.TABLES, []);
+      state.reviews = loadLS(LS_KEYS.REVIEWS, []);
+      state.notifs = loadLS(LS_KEYS.NOTIFS, []);
+      return;
+    }
+
+    /* ============================
+       Seed menu entries EXACTLY per user's requested dataset.
+       The only change to the program is placing this data into state.menu.
+       Items use uid(prefix) for id generation to keep uniqueness.
+       ============================ */
+
+    const menuItems = [
+      // BREAKFAST (20)
+      { id: uid('b1'),  name:'Pancakes with Syrup',            category:'Breakfast', price:120.00, nonveg:false, available:true, image:'pancakes.jpg' },
+      { id: uid('b2'),  name:'Omelette',                       category:'Breakfast', price:100.00, nonveg:true,  available:true, image:'omlette.jpg' },
+      { id: uid('b3'),  name:'Idli Sambar',                    category:'Breakfast', price:80.00,  nonveg:false, available:true, image:'idlisambar.jpg' },
+      { id: uid('b4'),  name:'Masala Dosa',                    category:'Breakfast', price:90.00,  nonveg:false, available:true, image:'masaladosa.jpg' },
+      { id: uid('b5'),  name:'French Toast',                   category:'Breakfast', price:110.00, nonveg:true,  available:true, image:'frenchtoast.jpg' },
+      { id: uid('b6'),  name:'Paratha with Curd',             category:'Breakfast', price:95.00,  nonveg:false, available:true, image:'parathacurd.jpg' },
+      { id: uid('b7'),  name:'Poha',                           category:'Breakfast', price:70.00,  nonveg:false, available:true, image:'poha.jpg' },
+      { id: uid('b8'),  name:'Upma',                           category:'Breakfast', price:75.00,  nonveg:false, available:true, image:'upma.jpg' },
+      { id: uid('b9'),  name:'Egg Bhurji',                     category:'Breakfast', price:85.00,  nonveg:true,  available:true, image:'eggbhurji.jpg' },
+      { id: uid('b10'), name:'Bagel with Cream Cheese',        category:'Breakfast', price:130.00, nonveg:false, available:true, image:'bagel.jpg' },
+      { id: uid('b11'), name:'Aloo Puri',                      category:'Breakfast', price:100.00, nonveg:false, available:true, image:'aloopuri.jpg' },
+      { id: uid('b12'), name:'Cornflakes with Milk',           category:'Breakfast', price:60.00,  nonveg:false, available:true, image:'cornflakes.jpg' },
+      { id: uid('b13'), name:'Smoothie Bowl',                  category:'Breakfast', price:150.00, nonveg:false, available:true, image:'smoothiebowl.jpg' },
+      { id: uid('b14'), name:'Vada Pav',                       category:'Breakfast', price:50.00,  nonveg:false, available:true, image:'vadapav.jpg' },
+      { id: uid('b15'), name:'Egg Sandwich',                   category:'Breakfast', price:90.00,  nonveg:true,  available:true, image:'eggsandwich.jpg' },
+      { id: uid('b16'), name:'Chole Bhature',                  category:'Breakfast', price:120.00, nonveg:false, available:true, image:'cholebature.jpg' },
+      { id: uid('b17'), name:'Avocado Toast',                  category:'Breakfast', price:140.00, nonveg:false, available:true, image:'avacadotoast.jpg' },
+      { id: uid('b18'), name:'Banana Pancakes',                category:'Breakfast', price:125.00, nonveg:false, available:true, image:'bananapancakes.jpg' },
+      { id: uid('b19'), name:'Rava Kesari',                    category:'Breakfast', price:85.00,  nonveg:false, available:true, image:'ravakesari.jpg' },
+      { id: uid('b20'), name:'Stuffed Paratha',                category:'Breakfast', price:110.00, nonveg:false, available:true, image:'stuffedparatha.jpg' },
+
+      // LUNCH (20)
+      { id: uid('l1'),  name:'Chicken Biryani',                category:'Lunch',     price:220.00, nonveg:true,  available:true, image:'l1.jpg' },
+      { id: uid('l2'),  name:'Veg Thali',                      category:'Lunch',     price:180.00, nonveg:false, available:true, image:'l2.jpg' },
+      { id: uid('l3'),  name:'Dal Tadka with Rice',            category:'Lunch',     price:150.00, nonveg:false, available:true, image:'l3.jpg' },
+      { id: uid('l4'),  name:'Paneer Butter Masala with Naan', category:'Lunch',     price:200.00, nonveg:false, available:true, image:'l4.jpg' },
+      { id: uid('l5'),  name:'Fish Curry with Rice',           category:'Lunch',     price:240.00, nonveg:true,  available:true, image:'l5.jpg' },
+      { id: uid('l6'),  name:'Rajma Chawal',                   category:'Lunch',     price:160.00, nonveg:false, available:true, image:'l6.jpg' },
+      { id: uid('l7'),  name:'Chicken Curry with Roti',        category:'Lunch',     price:210.00, nonveg:true,  available:true, image:'l7.jpg' },
+      { id: uid('l8'),  name:'Mutton Rogan Josh with Rice',    category:'Lunch',     price:280.00, nonveg:true,  available:true, image:'l8.jpg' },
+      { id: uid('l9'),  name:'Veg Fried Rice with Manchurian', category:'Lunch',     price:190.00, nonveg:false, available:true, image:'l9.jpg' },
+      { id: uid('l10'), name:'Butter Chicken with Naan',       category:'Lunch',     price:250.00, nonveg:true,  available:true, image:'l10.jpg' },
+      { id: uid('l11'), name:'Palak Paneer with Roti',         category:'Lunch',     price:200.00, nonveg:false, available:true, image:'l11.jpg' },
+      { id: uid('l12'), name:'Hyderabadi Dum Biryani',         category:'Lunch',     price:230.00, nonveg:true,  available:true, image:'l12.jpg' },
+      { id: uid('l13'), name:'Veg Pulao',                      category:'Lunch',     price:150.00, nonveg:false, available:true, image:'l13.jpg' },
+      { id: uid('l14'), name:'Egg Curry with Rice',            category:'Lunch',     price:170.00, nonveg:true,  available:true, image:'l14.jpg' },
+      { id: uid('l15'), name:'Chana Masala with Bhature',      category:'Lunch',     price:190.00, nonveg:false, available:true, image:'l15.jpg' },
+      { id: uid('l16'), name:'Grilled Chicken Salad',          category:'Lunch',     price:210.00, nonveg:true,  available:true, image:'l16.jpg' },
+      { id: uid('l17'), name:'Pav Bhaji',                      category:'Lunch',     price:130.00, nonveg:false, available:true, image:'l17.jpg' },
+      { id: uid('l18'), name:'Vegetable Korma with Rice',      category:'Lunch',     price:185.00, nonveg:false, available:true, image:'l18.jpg' },
+      { id: uid('l19'), name:'Paneer Tikka Masala with Naan', category:'Lunch',     price:220.00, nonveg:false, available:true, image:'l19.jpg' },
+      { id: uid('l20'), name:'Shrimp Fried Rice',              category:'Lunch',     price:240.00, nonveg:true,  available:true, image:'l20.jpg' },
+
+      // DINNER (20)
+      { id: uid('d1'),  name:'Grilled Salmon with Veggies',    category:'Dinner',    price:300.00, nonveg:true,  available:true, image:'d1.jpg' },
+      { id: uid('d2'),  name:'Vegetable Lasagna',              category:'Dinner',    price:220.00, nonveg:false, available:true, image:'d2.jpg' },
+      { id: uid('d3'),  name:'Chicken Alfredo Pasta',          category:'Dinner',    price:250.00, nonveg:true,  available:true, image:'d3.jpg' },
+      { id: uid('d4'),  name:'Stuffed Bell Peppers',           category:'Dinner',    price:200.00, nonveg:false, available:true, image:'d4.jpg' },
+      { id: uid('d5'),  name:'Lamb Chops with Mashed Potatoes',category:'Dinner',    price:350.00, nonveg:true,  available:true, image:'d5.jpg' },
+      { id: uid('d6'),  name:'Paneer Tikka',                   category:'Dinner',    price:230.00, nonveg:false, available:true, image:'d6.jpg' },
+      { id: uid('d7'),  name:'Chicken Shawarma Plate',         category:'Dinner',    price:240.00, nonveg:true,  available:true, image:'d7.jpg' },
+      { id: uid('d8'),  name:'Vegetable Stir Fry with Rice',   category:'Dinner',    price:190.00, nonveg:false, available:true, image:'d8.jpg' },
+      { id: uid('d9'),  name:'Beef Steak with Fries',          category:'Dinner',    price:370.00, nonveg:true,  available:true, image:'d9.jpg' },
+      { id: uid('d10'), name:'Dal Makhani with Butter Naan',   category:'Dinner',    price:210.00, nonveg:false, available:true, image:'d10.jpg' },
+      { id: uid('d11'), name:'Thai Green Curry with Rice',     category:'Dinner',    price:260.00, nonveg:true,  available:true, image:'d11.jpg' },
+      { id: uid('d12'), name:'Margherita Pizza',               category:'Dinner',    price:200.00, nonveg:false, available:true, image:'d12.jpg' },
+      { id: uid('d13'), name:'Chicken Kebab Platter',          category:'Dinner',    price:270.00, nonveg:true,  available:true, image:'d13.jpg' },
+      { id: uid('d14'), name:'Vegetable Soup with Breadsticks',category:'Dinner',    price:160.00, nonveg:false, available:true, image:'d14.jpg' },
+      { id: uid('d15'), name:'Spaghetti Bolognese',            category:'Dinner',    price:240.00, nonveg:true,  available:true, image:'d15.jpg' },
+      { id: uid('d16'), name:'Palak Paneer with Rice',         category:'Dinner',    price:220.00, nonveg:false, available:true, image:'d16.jpg' },
+      { id: uid('d17'), name:'Grilled Chicken with Garlic Bread',category:'Dinner',  price:260.00, nonveg:true,  available:true, image:'d17.jpg' },
+      { id: uid('d18'), name:'Shahi Paneer with Roti',         category:'Dinner',    price:230.00, nonveg:false, available:true, image:'d18.jpg' },
+      { id: uid('d19'), name:'Prawn Curry with Rice',          category:'Dinner',    price:280.00, nonveg:true,  available:true, image:'d19.jpg' },
+      { id: uid('d20'), name:'Vegetable Biryani',              category:'Dinner',    price:200.00, nonveg:false, available:true, image:'d20.jpg' },
+
+      // SNACKS (20)
+      { id: uid('s1'),  name:'Samosa',                         category:'Snacks',    price:40.00,  nonveg:false, available:true, image:'s1.jpg' },
+      { id: uid('s2'),  name:'Spring Rolls',                   category:'Snacks',    price:70.00,  nonveg:false, available:true, image:'s2.jpg' },
+      { id: uid('s3'),  name:'Chicken Nuggets',                category:'Snacks',    price:100.00, nonveg:true,  available:true, image:'s3.jpg' },
+      { id: uid('s4'),  name:'French Fries',                   category:'Snacks',    price:60.00,  nonveg:false, available:true, image:'s4.jpg' },
+      { id: uid('s5'),  name:'Veg Pakora',                     category:'Snacks',    price:50.00,  nonveg:false, available:true, image:'s5.jpg' },
+      { id: uid('s6'),  name:'Paneer Tikka',                   category:'Snacks',    price:120.00, nonveg:false, available:true, image:'s6.jpg' },
+      { id: uid('s7'),  name:'Chicken Popcorn',                category:'Snacks',    price:110.00, nonveg:true,  available:true, image:'s7.jpg' },
+      { id: uid('s8'),  name:'Onion Rings',                    category:'Snacks',    price:70.00,  nonveg:false, available:true, image:'s8.jpg' },
+      { id: uid('s9'),  name:'Bread Pakoda',                   category:'Snacks',    price:60.00,  nonveg:false, available:true, image:'s9.jpg' },
+      { id: uid('s10'), name:'Cheese Balls',                   category:'Snacks',    price:80.00,  nonveg:false, available:true, image:'s10.jpg' },
+      { id: uid('s11'), name:'Chicken Wings',                  category:'Snacks',    price:150.00, nonveg:true,  available:true, image:'s11.jpg' },
+      { id: uid('s12'), name:'Nachos with Salsa',              category:'Snacks',    price:130.00, nonveg:false, available:true, image:'s12.jpg' },
+      { id: uid('s13'), name:'Veg Sandwich',                   category:'Snacks',    price:90.00,  nonveg:false, available:true, image:'s13.jpg' },
+      { id: uid('s14'), name:'Hot Dog',                        category:'Snacks',    price:140.00, nonveg:true,  available:true, image:'s14.jpg' },
+      { id: uid('s15'), name:'Pani Puri',                      category:'Snacks',    price:50.00,  nonveg:false, available:true, image:'s15.jpg' },
+      { id: uid('s16'), name:'Sev Puri',                       category:'Snacks',    price:60.00,  nonveg:false, available:true, image:'s16.jpg' },
+      { id: uid('s17'), name:'Burger',                         category:'Snacks',    price:160.00, nonveg:true,  available:true, image:'s17.jpg' },
+      { id: uid('s18'), name:'Cheese Sandwich',                category:'Snacks',    price:100.00, nonveg:false, available:true, image:'s18.jpg' },
+      { id: uid('s19'), name:'Cutlet',                         category:'Snacks',    price:70.00,  nonveg:false, available:true, image:'s19.jpg' },
+      { id: uid('s20'), name:'Bhel Puri',                      category:'Snacks',    price:60.00,  nonveg:false, available:true, image:'s20.jpg' },
+
+      // CUISINES (20)
+      { id: uid('c1'),  name:'Sushi Roll (6 pcs)',             category:'Cuisines',  price:240.00, nonveg:true,  available:true, image:'c1.jpg' },
+      { id: uid('c2'),  name:'Ramen Bowl',                     category:'Cuisines',  price:220.00, nonveg:true,  available:true, image:'c2.jpg' },
+      { id: uid('c3'),  name:'Tacos',                          category:'Cuisines',  price:180.00, nonveg:true,  available:true, image:'c3.jpg' },
+      { id: uid('c4'),  name:'Falafel Wrap',                   category:'Cuisines',  price:160.00, nonveg:false, available:true, image:'c4.jpg' },
+      { id: uid('c5'),  name:'Pad Thai',                       category:'Cuisines',  price:210.00, nonveg:true,  available:true, image:'c5.jpg' },
+      { id: uid('c6'),  name:'Dim Sum',                        category:'Cuisines',  price:200.00, nonveg:true,  available:true, image:'c6.jpg' },
+      { id: uid('c7'),  name:'Shawarma Wrap',                  category:'Cuisines',  price:170.00, nonveg:true,  available:true, image:'c7.jpg' },
+      { id: uid('c8'),  name:'Pizza Margherita',               category:'Cuisines',  price:190.00, nonveg:false, available:true, image:'c8.jpg' },
+      { id: uid('c9'),  name:'Spaghetti Carbonara',            category:'Cuisines',  price:230.00, nonveg:true,  available:true, image:'c9.jpg' },
+      { id: uid('c10'), name:'Hummus with Pita',               category:'Cuisines',  price:150.00, nonveg:false, available:true, image:'c10.jpg' },
+      { id: uid('c11'), name:'Pho Noodle Soup',                category:'Cuisines',  price:240.00, nonveg:true,  available:true, image:'c11.jpg' },
+      { id: uid('c12'), name:'Kebab Platter',                  category:'Cuisines',  price:260.00, nonveg:true,  available:true, image:'c12.jpg' },
+      { id: uid('c13'), name:'Peking Duck',                    category:'Cuisines',  price:350.00, nonveg:true,  available:true, image:'c13.jpg' },
+      { id: uid('c14'), name:'Burrito Bowl',                   category:'Cuisines',  price:200.00, nonveg:true,  available:true, image:'c14.jpg' },
+      { id: uid('c15'), name:'Paella',                         category:'Cuisines',  price:320.00, nonveg:true,  available:true, image:'c15.jpg' },
+      { id: uid('c16'), name:'Tom Yum Soup',                   category:'Cuisines',  price:180.00, nonveg:true,  available:true, image:'c16.jpg' },
+      { id: uid('c17'), name:'Fried Rice with Chicken',        category:'Cuisines',  price:190.00, nonveg:true,  available:true, image:'c17.jpg' },
+      { id: uid('c18'), name:'Paneer Tikka Masala',            category:'Cuisines',  price:210.00, nonveg:false, available:true, image:'c18.jpg' },
+      { id: uid('c19'), name:'Korean Bibimbap',                category:'Cuisines',  price:230.00, nonveg:true,  available:true, image:'c19.jpg' },
+      { id: uid('c20'), name:'Miso Soup',                      category:'Cuisines',  price:140.00, nonveg:false, available:true, image:'c20.jpg' },
+
+      // DRINKS (20)
+      { id: uid('dr1'),  name:'Masala Chai',                   category:'Drinks',    price:40.00,  nonveg:false, available:true, image:'t1.jpg' },
+      { id: uid('dr2'),  name:'Cold Coffee',                   category:'Drinks',    price:80.00,  nonveg:false, available:true, image:'t2.jpg' },
+      { id: uid('dr3'),  name:'Green Tea',                     category:'Drinks',    price:50.00,  nonveg:false, available:true, image:'t3.jpg' },
+      { id: uid('dr4'),  name:'Mango Smoothie',                category:'Drinks',    price:120.00, nonveg:false, available:true, image:'t4.jpg' },
+      { id: uid('dr5'),  name:'Fresh Lime Soda',               category:'Drinks',    price:60.00,  nonveg:false, available:true, image:'t5.jpg' },
+      { id: uid('dr6'),  name:'Iced Tea',                      category:'Drinks',    price:70.00,  nonveg:false, available:true, image:'t6.jpg' },
+      { id: uid('dr7'),  name:'Cappuccino',                    category:'Drinks',    price:100.00, nonveg:false, available:true, image:'t7.jpg' },
+      { id: uid('dr8'),  name:'Latte',                         category:'Drinks',    price:110.00, nonveg:false, available:true, image:'t8.jpg' },
+      { id: uid('dr9'),  name:'Espresso',                      category:'Drinks',    price:90.00,  nonveg:false, available:true, image:'t9.jpg' },
+      { id: uid('dr10'), name:'Hot Chocolate',                 category:'Drinks',    price:120.00, nonveg:false, available:true, image:'t10.jpg' },
+      { id: uid('dr11'), name:'Lassi (Sweet)',                 category:'Drinks',    price:80.00,  nonveg:false, available:true, image:'t11.jpg' },
+      { id: uid('dr12'), name:'Buttermilk',                    category:'Drinks',    price:50.00,  nonveg:false, available:true, image:'t12.jpg' },
+      { id: uid('dr13'), name:'Coconut Water',                 category:'Drinks',    price:60.00,  nonveg:false, available:true, image:'t13.jpg' },
+      { id: uid('dr14'), name:'Strawberry Milkshake',          category:'Drinks',    price:130.00, nonveg:false, available:true, image:'t14.jpg' },
+      { id: uid('dr15'), name:'Banana Milkshake',              category:'Drinks',    price:120.00, nonveg:false, available:true, image:'t15.jpg' },
+      { id: uid('dr16'), name:'Orange Juice',                  category:'Drinks',    price:100.00, nonveg:false, available:true, image:'t16.jpg' },
+      { id: uid('dr17'), name:'Apple Juice',                   category:'Drinks',    price:100.00, nonveg:false, available:true, image:'t17.jpg' },
+      { id: uid('dr18'), name:'Soft Drink (Can)',              category:'Drinks',    price:60.00,  nonveg:false, available:true, image:'t18.jpg' },
+      { id: uid('dr19'), name:'Energy Drink',                  category:'Drinks',    price:150.00, nonveg:false, available:true, image:'t19.jpg' },
+      { id: uid('dr20'), name:'Mineral Water (Bottle)',        category:'Drinks',    price:30.00,  nonveg:false, available:true, image:'t20.jpg' }
+    ];
+
+    state.menu = menuItems;
+
+    // tables: default 8 tables
+    state.tables = Array.from({length:8}, (_,i)=>({
+      id: uid('t'),
+      number: i+1,
+      bookedBy: null,
+      bookedAt: null
+    }));
+
+    // orders and reviews empty initially
+    state.orders = [];
+    state.reviews = [];
+    state.notifs = [];
+
+    // persist initial data
+    persistAll();
+  }
+
+  function persistAll(){
+    saveLS(LS_KEYS.MENU, state.menu);
+    saveLS(LS_KEYS.ORDERS, state.orders);
+    saveLS(LS_KEYS.TABLES, state.tables);
+    saveLS(LS_KEYS.REVIEWS, state.reviews);
+    saveLS(LS_KEYS.NOTIFS, state.notifs);
+    updateNotifBadge();
+  }
+
+  // ---- Simple notification mechanism (visible only to admin)
+  function pushNotif(message, type='info'){
+    const item = { id: uid('n'), message, type, time: nowISO() };
+    state.notifs.unshift(item); // newest first
+    saveLS(LS_KEYS.NOTIFS, state.notifs);
+    // only update header badge / popup if admin is logged in
+    if(isAdmin) {
+      updateNotifBadge();
+      showNotifPopup();
+    } else {
+      // if not admin, keep notifications stored but do not show badge/popup
+      updateNotifBadge(); // badge will remain hidden if not admin
+    }
+  }
+
+  function updateNotifBadge(){
+    const count = state.notifs.length;
+    if(isAdmin && count > 0){
+      notifBadge.style.display = 'flex';
+      notifBadge.textContent = count > 99 ? '99+' : String(count);
+    } else {
+      notifBadge.style.display = 'none';
+    }
+  }
+
+  // open/close notifs panel (admin only)
+  function showNotifPopup(){
+    if(!isAdmin) return;
+    renderNotifList();
+    notifList.style.display = 'block';
+    notifList.setAttribute('aria-hidden','false');
+    // auto-hide after 8s
+    clearTimeout(notifList._hideTimer);
+    notifList._hideTimer = setTimeout(()=>{ hideNotifPopup(); }, 8000);
+  }
+  function hideNotifPopup(){
+    notifList.style.display = 'none';
+    notifList.setAttribute('aria-hidden','true');
+  }
+  function renderNotifList(){
+    notifList.innerHTML = '';
+    notifList.className = 'notif-list';
+    const header = document.createElement('div');
+    header.className = 'row';
+    header.innerHTML = `<strong style="font-size:15px">Notifications</strong> <div class="spacer"></div>
+                        <button id="clearNotifs" class="btn ghost" style="padding:6px 10px;">Clear</button>`;
+    notifList.appendChild(header);
+    if(state.notifs.length === 0){
+      const el = document.createElement('div');
+      el.className = 'muted';
+      el.style.padding = '12px';
+      el.textContent = 'No notifications';
+      notifList.appendChild(el);
+      return;
+    }
+
+    state.notifs.slice(0,30).forEach(n=>{
+      const row = document.createElement('div');
+      row.style.padding = '8px';
+      row.style.borderBottom = '1px solid rgba(10,20,25,0.03)';
+      row.innerHTML = `<div style="font-size:13px;"><strong>${n.message}</strong></div>
+                       <div class="muted" style="font-size:12px; margin-top:6px;">${new Date(n.time).toLocaleString()}</div>`;
+      notifList.appendChild(row);
+    });
+    // attach clear handler
+    document.getElementById('clearNotifs').onclick = ()=>{
+      state.notifs = [];
+      saveLS(LS_KEYS.NOTIFS, state.notifs);
+      updateNotifBadge();
+      renderNotifList();
+    };
+  }
+
+  // ---- View management
+  function showView(el){
+    // hide all views
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    el.classList.add('active');
+    // set focus for screen readers
+    setTimeout(()=> el.focus && el.focus(), 50);
+  }
+
+  // ---- Image-button placeholders handling
+  function applyImagePlaceholders(){
+    // Each .img-btn has data-image-link attribute and an <img> child
+    document.querySelectorAll('.img-btn').forEach(btn=>{
+      const img = btn.querySelector('img.media');
+      const link = btn.dataset.imageLink || '';
+      // Add a helpful comment in DOM (so you can replace easily)
+      // To swap images, replace the data-image-link attribute value with a real URL.
+      if(img){
+        if(link && link.startsWith('http')) {
+          img.src = link;
+        } else {
+          // keep blank so CSS gradient placeholder shows; leave alt text.
+          img.src = '';
+        }
+      }
+    });
+
+    // welcome image placeholder
+    const welcomeLink = 'customerwelcome.jpg'; // placeholder token
+    if(welcomeLink && welcomeLink.startsWith('http')) customerWelcomeImg.src = customerwelcome.jpg; else customerWelcomeImg.src = 'customerwelcome.jpg';
+  }
+
+  // ---- Admin login flow
+  function openAdminLogin(){
+    adminLoginModal.style.display = 'flex';
+    adminLoginModal.setAttribute('aria-hidden','false');
+    document.getElementById('adminUser').focus();
+  }
+  function closeAdminLogin(){
+    adminLoginModal.style.display = 'none';
+    adminLoginModal.setAttribute('aria-hidden','true');
+    loginError.style.display = 'none';
+  }
+  function handleAdminLogin(e){
+    e && e.preventDefault();
+    const user = document.getElementById('adminUser').value.trim();
+    const pass = document.getElementById('adminPass').value;
+    if(user === ADMIN_CRED.user && pass === ADMIN_CRED.pass){
+      // success
+      closeAdminLogin();
+      isAdmin = true;
+      headerNotifWrapper.style.display = 'inline-flex'; // show header notifications for admin
+      updateNotifBadge();
+      showAdminDashboard();
+    } else {
+      loginError.style.display = 'block';
+      loginError.textContent = 'Invalid credentials ';
+    }
+  }
+
+  // ---- Admin dashboard
+  function showAdminDashboard(){
+    showView(adminDashboard);
+    renderAdminHomeArea();
+  }
+  function renderAdminHomeArea(){
+    adminContentArea.innerHTML = '';
+    // by default show orders list
+    renderAdminOrders();
+  }
+
+  // ---- Admin: Orders
+  function renderAdminOrders(){
+    adminContentArea.innerHTML = `<div class="card"><div style="display:flex; align-items:center; gap:12px;">
+      <h3 style="margin:0;">Orders</h3>
+      <div class="spacer"></div>
+      <div class="muted">${state.orders.length} orders</div>
+      </div>
+      <div style="height:12px"></div>
+      <div id="ordersGrid" class="orders-grid"></div>
+    </div>`;
+
+    const container = document.getElementById('ordersGrid');
+    if(state.orders.length === 0){
+      container.innerHTML = '<div class="muted" style="padding:12px;">No orders yet.</div>';
+      return;
+    }
+
+    state.orders.forEach(order=>{
+      const card = document.createElement('div');
+      card.className = 'order-card';
+      // order items images small row
+      const itemsHtml = order.items.map(it=>`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+           <img src="${escapeHtml(it.image||'')}" style="width:56px;height:40px;border-radius:6px;object-fit:cover;"/>
+           <div style="flex:1;">
+             <div style="font-weight:700">${escapeHtml(it.name)}</div>
+             <div class="muted" style="font-size:13px">${it.qty} × ₹${Number(it.price).toFixed(2)}</div>
+           </div>
+         </div>`).join('');
+      const customer = order.customer || 'Guest';
+      card.innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;">
+          <div><strong>${escapeHtml(customer)}</strong> <div class="muted" style="font-size:12px">Table ${escapeHtml(String(order.table || '—'))}</div></div>
+          <div class="muted" style="font-size:12px">${new Date(order.time).toLocaleString()}</div>
+        </div>
+        <div style="height:8px"></div>
+        ${itemsHtml}
+        <div style="height:8px"></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label for="status_${order.id}" class="muted">Status</label>
+          <select id="status_${order.id}" data-order-id="${order.id}">
+            <option ${order.status==='pending'?'selected':''} value="pending">Pending</option>
+            <option ${order.status==='preparing'?'selected':''} value="preparing">Preparing</option>
+            <option ${order.status==='ready'?'selected':''} value="ready">Ready</option>
+            <option ${order.status==='served'?'selected':''} value="served">Served</option>
+            <option ${order.status==='cancelled'?'selected':''} value="cancelled">Cancelled</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="btn ghost" data-order-id="${order.id}" aria-label="Mark notified">Notify</button>
+        </div>`;
+      container.appendChild(card);
+    });
+
+    // attach change handlers
+    container.querySelectorAll('select').forEach(sel=>{
+      sel.onchange = (ev) => {
+        const id = ev.target.dataset.orderId;
+        const ord = state.orders.find(o=>o.id===id);
+        if(ord){ ord.status = ev.target.value; persistAll(); pushNotif(`Order ${id} status changed to ${ord.status}`); renderAdminOrders(); }
+      };
+    });
+    container.querySelectorAll('button[data-order-id]').forEach(btn=>{
+      btn.onclick = (ev)=>{
+        const id = ev.target.dataset.orderId;
+        pushNotif(`Admin notified customer about order ${id}`);
+      };
+    });
+  }
+
+  // ---- Admin: Menu (CRUD) with category buttons
+  function renderAdminMenu(){
+    adminContentArea.innerHTML = `<div class="card">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <h3 style="margin:0;">Menu</h3>
+        <div class="spacer"></div>
+        <div id="adminCategoryButtons" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <input id="adminMenuSearch" type="text" placeholder="Search items..." aria-label="Search menu items" style="min-width:160px;" />
+        <div style="width:8px"></div>
+        <button id="adminFilterNonveg" class="btn ghost" title="Non-veg filter">🔺</button>
+        <button id="adminFilterVeg" class="btn ghost" title="Veg filter">▢</button>
+        <div style="width:8px"></div>
+        <button id="adminAddMenu" class="btn">Add item</button>
+      </div>
+      <div style="height:12px"></div>
+      <div id="adminMenuList" class="menu-list"></div>
+    </div>`;
+
+    const categories = ['All','Breakfast','Lunch','Dinner','Snacks','Drinks','Cuisines'];
+    const catContainer = document.getElementById('adminCategoryButtons');
+    categories.forEach(cat=>{
+      const b = document.createElement('button');
+      b.className = 'btn ghost';
+      b.textContent = cat;
+      b.dataset.cat = cat;
+      b.onclick = ()=> { selectedCategory = cat === 'All' ? null : cat; updateCategoryButtons(); refresh(); };
+      catContainer.appendChild(b);
+    });
+
+    let selectedCategory = null;
+    function updateCategoryButtons(){
+      catContainer.querySelectorAll('button').forEach(btn=>{
+        btn.style.opacity = (btn.dataset.cat === (selectedCategory || 'All')) ? '1' : '0.6';
+      });
+    }
+
+    const list = document.getElementById('adminMenuList');
+    const search = document.getElementById('adminMenuSearch');
+    const fNon = document.getElementById('adminFilterNonveg');
+    const fVeg = document.getElementById('adminFilterVeg');
+    let filterNon = false, filterVeg = false;
+
+    function refresh(){
+      const q = (search.value || '').toLowerCase();
+      let items = state.menu.slice();
+      if(selectedCategory) items = items.filter(i=>i.category === selectedCategory);
+      if(filterNon) items = items.filter(i=>i.nonveg);
+      if(filterVeg) items = items.filter(i=>!i.nonveg);
+      if(q) items = items.filter(i=>i.name.toLowerCase().includes(q));
+      // default layout: small image left, details right
+      list.innerHTML = '';
+      items.forEach(it=>{
+        const el = document.createElement('div');
+        el.className = 'menu-item card';
+        el.innerHTML = `<img class="thumb" src="${escapeHtml(it.image||'')}" alt="${escapeHtml(it.name)}" onerror="this.style.background='#f3f6f7';this.src='';"/>
+          <div class="meta">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="name">${escapeHtml(it.name)}</div>
+              <div class="muted" style="font-size:13px;">${escapeHtml(it.category)}</div>
+              <div class="spacer"></div>
+              <div style="font-weight:800;">₹${Number(it.price).toFixed(2)}</div>
+            </div>
+            <div class="sub">
+              <span>${it.nonveg ? '🔺 Non-veg' : '▢ Veg'}</span>
+              &nbsp;•&nbsp;
+              <span>${it.available ? 'Available' : 'Unavailable'}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            <button class="btn ghost edit-btn" data-id="${it.id}">Edit</button>
+            <button class="btn secondary toggle-avail" data-id="${it.id}">${it.available ? 'Disable' : 'Enable'}</button>
+          </div>`;
+        list.appendChild(el);
+      });
+
+      // attach handlers
+      list.querySelectorAll('.edit-btn').forEach(b=>{
+        b.onclick = ()=> openMenuEditor(b.dataset.id);
+      });
+      list.querySelectorAll('.toggle-avail').forEach(b=>{
+        b.onclick = ()=>{
+          const id = b.dataset.id; const item = state.menu.find(x=>x.id===id);
+          if(item){ item.available = !item.available; persistAll(); refresh(); pushNotif(`Menu item "${item.name}" availability changed`); }
+        };
+      });
+    }
+
+    // search & filters
+    search.oninput = refresh;
+    fNon.onclick = () => { filterNon = !filterNon; fNon.style.opacity = filterNon ? '1' : '0.6'; refresh(); };
+    fVeg.onclick = () => { filterVeg = !filterVeg; fVeg.style.opacity = filterVeg ? '1' : '0.6'; refresh(); };
+
+    document.getElementById('adminAddMenu').onclick = () => openMenuEditor(null);
+
+    updateCategoryButtons();
+    refresh();
+  }
+
+  // open menu item editor (add/edit)
+  function openMenuEditor(itemId){
+    // show form from template
+    const tpl = document.getElementById('menuItemFormTpl');
+    const frag = tpl.content.cloneNode(true);
+    const container = document.createElement('div');
+    container.appendChild(frag);
+    adminContentArea.innerHTML = '';
+    adminContentArea.appendChild(container);
+
+    const imgInp = container.querySelector('#mi_img');
+    const nameInp = container.querySelector('#mi_name');
+    const categoryInp = container.querySelector('#mi_category');
+    const priceInp = container.querySelector('#mi_price');
+    const nonvegChk = container.querySelector('#mi_nonveg');
+    const availChk = container.querySelector('#mi_avail');
+    const saveBtn = container.querySelector('#mi_save');
+    const cancelBtn = container.querySelector('#mi_cancel');
+    const delBtn = container.querySelector('#mi_delete');
+
+    let item = null;
+    if(itemId){
+      item = state.menu.find(x=>x.id===itemId);
+      if(item){
+        imgInp.value = item.image || '';
+        nameInp.value = item.name;
+        categoryInp.value = item.category;
+        priceInp.value = item.price;
+        nonvegChk.checked = !!item.nonveg;
+        availChk.checked = !!item.available;
+        delBtn.style.display = 'inline-flex';
+      }
+    }
+
+    cancelBtn.onclick = ()=> renderAdminMenu();
+    delBtn.onclick = ()=>{
+      if(!item) return;
+      state.menu = state.menu.filter(m=>m.id !== item.id);
+      persistAll();
+      pushNotif(`Menu item "${item.name}" deleted`);
+      renderAdminMenu();
+    };
+    saveBtn.onclick = ()=>{
+      const data = {
+        id: item ? item.id : uid('m'),
+        image: imgInp.value || '',
+        name: nameInp.value.trim() || 'Untitled item',
+        category: categoryInp.value.trim() || 'Uncategorized',
+        price: Number(priceInp.value) || 0,
+        nonveg: !!nonvegChk.checked,
+        available: !!availChk.checked
+      };
+      if(item){
+        // update
+        const idx = state.menu.findIndex(m=>m.id===item.id);
+        state.menu[idx] = data;
+        pushNotif(`Menu item "${data.name}" updated`);
+      } else {
+        state.menu.unshift(data); // put new at top
+        pushNotif(`Menu item "${data.name}" added`);
+      }
+      persistAll();
+      renderAdminMenu();
+    };
+  }
+
+  // ---- Admin: Tables (management)
+  function renderAdminTables(){
+    adminContentArea.innerHTML = `<div class="card">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h3 style="margin:0;">Tables & Bookings</h3>
+        <div class="spacer"></div>
+        <label class="muted">Set table count:</label>
+        <input id="tableCount" type="number" min="1" style="width:80px;" />
+        <button id="updateTableCount" class="btn ghost">Apply</button>
+        <div style="width:8px"></div>
+        <button id="adminAddTable" class="btn">Add Table</button>
+        <!--<button id="exportBookings" class="btn ghost">Export Bookings</button>--!>
+      </div>
+      <div style="height:12px"></div>
+      <div id="tablesGrid" class="tables-grid"></div>
+      <div style="height:10px"></div>
+      <div id="bookingsList" style="margin-top:10px;"></div>
+    </div>`;
+
+    const grid = document.getElementById('tablesGrid');
+    const countInput = document.getElementById('tableCount');
+    const updateBtn = document.getElementById('updateTableCount');
+    const addBtn = document.getElementById('adminAddTable');
+    const exportBookingsBtn = document.getElementById('exportBookings');
+
+    countInput.value = state.tables.length;
+
+    function refreshGrid(){
+      grid.innerHTML = '';
+      state.tables.forEach(t=>{
+        const el = document.createElement('div');
+        el.className = 'table-card' + (t.bookedBy ? ' booked' : '');
+        el.tabIndex = 0;
+        el.setAttribute('role','button');
+        el.innerHTML = `<div style="font-weight:800;">Table ${t.number}</div>
+                      <div class="muted" style="font-size:13px; margin-top:6px;">
+                        ${t.bookedBy ? `Booked by ${escapeHtml(t.bookedBy)} at ${new Date(t.bookedAt).toLocaleString()}` : 'Available'}
+                      </div>
+                      <div style="height:8px"></div>
+                      <div style="display:flex;gap:8px; justify-content:center;">
+                        ${t.bookedBy ? `<button class="btn ghost cancel-book" data-id="${t.id}">Cancel</button>` : `<button class="btn secondary book-table" data-id="${t.id}">Book</button>`}
+                      </div>`;
+        grid.appendChild(el);
+      });
+
+      // bookings list
+      const bookingsEl = document.getElementById('bookingsList');
+      const bookings = state.tables.filter(t=>t.bookedBy).map(t=>({
+        table: t.number, name: t.bookedBy, time: t.bookedAt, id: t.id
+      }));
+      bookingsEl.innerHTML = `<h4>Active Bookings (${bookings.length})</h4>`;
+      if(bookings.length === 0) bookingsEl.innerHTML += `<div class="muted">No bookings</div>`;
+      else {
+        bookings.forEach(b=>{
+          const row = document.createElement('div');
+          row.className = 'card';
+          row.style.marginTop='8px';
+          row.innerHTML = `<div style="display:flex;align-items:center;">
+            <div><strong>Table ${b.table}</strong><div class="muted">${new Date(b.time).toLocaleString()}</div></div>
+            <div class="spacer"></div>
+            <div>${escapeHtml(b.name)} </div>
+            <div style="width:12px"></div>
+            <button class="btn ghost cancel-book-admin" data-id="${b.id}">Cancel</button>
+          </div>`;
+          bookingsEl.appendChild(row);
+        });
+      }
+
+      // attach handlers
+      grid.querySelectorAll('.cancel-book').forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.dataset.id;
+          const t = state.tables.find(x=>x.id===id);
+          if(t){
+            t.bookedBy = null; t.bookedAt = null;
+            persistAll(); pushNotif(`Reservation for table ${t.number} was cancelled by admin`); refreshGrid();
+          }
+        };
+      });
+
+      grid.querySelectorAll('.book-table').forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.dataset.id;
+          const t = state.tables.find(x=>x.id===id);
+          if(t){
+            const name = prompt('Book table for (name):', 'Walk-in Guest') || 'Walk-in Guest';
+            t.bookedBy = name; t.bookedAt = nowISO();
+            persistAll(); pushNotif(`Table ${t.number} booked by admin: ${name}`); refreshGrid();
+          }
+        };
+      });
+
+      // bookings cancel in list
+      bookingsEl.querySelectorAll('.cancel-book-admin').forEach(b=>{
+        b.onclick = ()=>{
+          const id = b.dataset.id;
+          const t = state.tables.find(x=>x.id===id);
+          if(t){ t.bookedBy = null; t.bookedAt = null; persistAll(); pushNotif(`Booking for table ${t.number} cancelled by admin`); refreshGrid(); }
+        };
+      });
+    }
+
+    addBtn.onclick = ()=>{
+      const num = state.tables.length + 1;
+      state.tables.push({ id: uid('t'), number: num, bookedBy:null, bookedAt:null });
+      persistAll(); refreshGrid();
+    };
+
+    updateBtn.onclick = ()=>{
+      const desired = Math.max(1, Number(countInput.value) || state.tables.length);
+      adjustTableCount(desired);
+      persistAll(); refreshGrid(); showToast('Table count updated');
+    };
+
+    exportBookingsBtn.onclick = ()=>{
+      const bookings = state.tables.filter(t=>t.bookedBy).map(t=>({ table: t.number, bookedBy: t.bookedBy, time: t.bookedAt }));
+      const blob = new Blob([JSON.stringify(bookings, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bookings.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    refreshGrid();
+  }
+
+  function adjustTableCount(desired){
+    const current = state.tables.length;
+    if(desired === current) return;
+    if(desired > current){
+      // add more
+      for(let i=current;i<desired;i++){
+        state.tables.push({ id: uid('t'), number: i+1, bookedBy:null, bookedAt:null });
+      }
+    } else {
+      // remove from end; move bookings if any
+      // simple behavior: if removing tables that are booked, ask for confirmation and cancel bookings
+      const toRemove = state.tables.slice(desired);
+      const booked = toRemove.filter(t=>t.bookedBy);
+      if(booked.length > 0){
+        if(!confirm(`Removing ${toRemove.length} table(s) will cancel ${booked.length} active booking(s). Proceed?`)) return;
+      }
+      state.tables = state.tables.slice(0, desired);
+    }
+  }
+
+  // ---- Admin: Reviews
+  function renderAdminReviews(){
+    adminContentArea.innerHTML = `<div class="card">
+      <div style="display:flex;align-items:center">
+        <h3 style="margin:0;">Reviews</h3>
+        <div class="spacer"></div>
+      </div>
+      <div style="height:12px"></div>
+      <div id="reviewsList"></div>
+    </div>`;
+
+    const rl = document.getElementById('reviewsList');
+    rl.innerHTML = '';
+    if(state.reviews.length === 0){ rl.innerHTML = '<div class="muted">No reviews yet.</div>'; return; }
+    state.reviews.forEach(r=>{
+      const el = document.createElement('div');
+      el.className = 'review';
+      el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><strong>${escapeHtml(r.customer || 'Guest')}</strong><div class="muted" style="font-size:12px">${new Date(r.time).toLocaleString()}</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <div>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+          <div>
+            <button class="btn ghost mark-addressed" data-id="${r.id}">Mark addressed</button>
+            <button class="btn secondary delete-review" data-id="${r.id}">Delete</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px">${escapeHtml(r.comment)}</div>`;
+      rl.appendChild(el);
+    });
+
+    rl.querySelectorAll('.mark-addressed').forEach(b=>{
+      b.onclick = ()=> {
+        const id = b.dataset.id; const idx = state.reviews.findIndex(x=>x.id===id);
+        if(idx>=0){ state.reviews.splice(idx,1); persistAll(); pushNotif('Review marked addressed'); renderAdminReviews(); }
+      };
+    });
+    rl.querySelectorAll('.delete-review').forEach(b=>{
+      b.onclick = ()=> {
+        const id = b.dataset.id; const idx = state.reviews.findIndex(x=>x.id===id);
+        if(idx>=0){ const name = state.reviews[idx].customer||'Guest'; state.reviews.splice(idx,1); persistAll(); pushNotif(`Review by ${name} deleted`); renderAdminReviews(); }
+      };
+    });
+  }
+
+  // ---- Admin: Notifications view (just open the popup)
+  function openAdminNotifs(){
+    if(!isAdmin) return;
+    showNotifPopup();
+  }
+
+  // ---- Customer: Menu & Ordering (with categories)
+  function renderCustomerMenu(){
+    custContentArea.innerHTML = `<div class="card">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <h3 style="margin:0;">Menu</h3>
+        <div class="spacer"></div>
+        <div id="custCategoryButtons" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <input id="custSearch" type="text" placeholder="Search items..." aria-label="Search menu" style="min-width:160px;" />
+        <button id="custFilterNon" class="btn ghost" title="Non-veg">🔺</button>
+        <button id="custFilterVeg" class="btn ghost" title="Veg">▢</button>
+        <div style="width:8px"></div>
+        <button id="openCartBtn" class="btn">Open Cart</button>
+      </div>
+      <div style="height:12px"></div>
+      <div id="custMenuList" class="menu-list"></div>
+    </div>
+    <div id="custCartArea" style="margin-top:10px;"></div>`;
+
+    const categories = ['All','Breakfast','Lunch','Dinner','Snacks','Drinks','Cuisines'];
+    const catContainer = document.getElementById('custCategoryButtons');
+    categories.forEach(cat=>{
+      const b = document.createElement('button');
+      b.className = 'btn ghost';
+      b.textContent = cat;
+      b.dataset.cat = cat;
+      b.onclick = ()=> { selectedCategory = cat === 'All' ? null : cat; updateCategoryButtons(); refresh(); };
+      catContainer.appendChild(b);
+    });
+
+    let selectedCategory = null;
+    function updateCategoryButtons(){
+      catContainer.querySelectorAll('button').forEach(btn=>{
+        btn.style.opacity = (btn.dataset.cat === (selectedCategory || 'All')) ? '1' : '0.6';
+      });
+    }
+
+    const list = document.getElementById('custMenuList');
+    const search = document.getElementById('custSearch');
+    const fNon = document.getElementById('custFilterNon');
+    const fVeg = document.getElementById('custFilterVeg');
+    let filterNon = false, filterVeg = false;
+
+    let cart = loadLS('rms_cart_v1', []);
+
+    function refresh(){
+      const q = (search.value || '').toLowerCase();
+      let items = state.menu.slice().filter(i=>i.available);
+      if(selectedCategory) items = items.filter(i=>i.category === selectedCategory);
+      if(filterNon) items = items.filter(i=>i.nonveg);
+      if(filterVeg) items = items.filter(i=>!i.nonveg);
+      if(q) items = items.filter(i=>i.name.toLowerCase().includes(q));
+      list.innerHTML = '';
+      items.forEach(it=>{
+        const el = document.createElement('div');
+        el.className = 'menu-item';
+        el.innerHTML = `<img class="thumb" src="${escapeHtml(it.image||'')}" alt="${escapeHtml(it.name)}" onerror="this.style.background='#f3f6f7';this.src='';"/>
+          <div class="meta">
+             <div style="display:flex;align-items:center;gap:8px;">
+               <div class="name">${escapeHtml(it.name)}</div>
+               <div class="muted" style="font-size:13px;">${escapeHtml(it.category)}</div>
+               <div class="spacer"></div>
+               <div style="font-weight:800;">₹${Number(it.price).toFixed(2)}</div>
+             </div>
+             <div class="sub">${it.nonveg ? '🔺 Non-veg' : '▢ Veg'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button class="btn ghost qty-minus" data-id="${it.id}">−</button>
+              <div style="min-width:28px;text-align:center;" id="qty_${it.id}">${(cart.find(x=>x.id===it.id)||{qty:0}).qty}</div>
+              <button class="btn ghost qty-plus" data-id="${it.id}">+</button>
+            </div>
+            <button class="btn" data-id="${it.id}">Add to cart</button>
+          </div>`;
+        list.appendChild(el);
+      });
+
+      // handlers
+      list.querySelectorAll('.qty-plus').forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.dataset.id;
+          const item = state.menu.find(x=>x.id===id);
+          if(!item) return;
+          const idx = cart.findIndex(x=>x.id===id);
+          if(idx === -1) cart.push({ id:item.id, name:item.name, price:item.price, qty:1, image:item.image });
+          else cart[idx].qty++;
+          saveLS('rms_cart_v1', cart); refresh(); renderCart();
+        };
+      });
+      list.querySelectorAll('.qty-minus').forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.dataset.id;
+          const idx = cart.findIndex(x=>x.id===id);
+          if(idx>-1){
+            cart[idx].qty = Math.max(0, cart[idx].qty-1);
+            if(cart[idx].qty === 0) cart.splice(idx,1);
+          }
+          saveLS('rms_cart_v1', cart); refresh(); renderCart();
+        };
+      });
+      list.querySelectorAll('button[data-id]').forEach(b=>{
+        b.onclick = (ev)=>{
+          const id = ev.currentTarget.dataset.id;
+          const item = state.menu.find(x=>x.id===id);
+          if(!item) return;
+          const idx = cart.findIndex(x=>x.id===id);
+          if(idx === -1) cart.push({ id:item.id, name:item.name, price:item.price, qty:1, image:item.image });
+          else cart[idx].qty++;
+          saveLS('rms_cart_v1', cart);
+          // confirmation toast (small message)
+          showToast(`Added ${item.name} to cart`);
+          refresh(); renderCart();
+        };
+      });
+    }
+
+    function renderCart(){
+      const cartArea = document.getElementById('custCartArea');
+      const cartData = loadLS('rms_cart_v1', []);
+      if(cartData.length === 0){
+        cartArea.innerHTML = '<div class="muted">Cart is empty.</div>';
+        return;
+      }
+      const total = cartData.reduce((s,i)=>s+(i.price*i.qty),0);
+      cartArea.innerHTML = `<div class="card"><h4>Cart</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="cartItems"></div>
+        <div style="height:8px"></div>
+        <div style="display:flex;align-items:center;">
+          <div style="font-weight:800">Total: ₹${total.toFixed(2)}</div>
+          <div class="spacer"></div>
+          <button id="placeOrderBtn" class="btn">Place Order</button>
+        </div></div>`;
+      const cartItems = document.getElementById('cartItems');
+      cartData.forEach(ci=>{
+        const node = document.createElement('div');
+        node.style.display='flex';
+        node.style.gap='8px';
+        node.style.alignItems='center';
+        node.innerHTML = `<img src="${escapeHtml(ci.image||'')}" style="width:56px;height:40px;border-radius:6px;object-fit:cover;" onerror="this.src=''; this.style.background='#f3f6f7';"/>
+          <div style="flex:1"><strong>${escapeHtml(ci.name)}</strong><div class="muted">${ci.qty} × ₹${ci.price}</div></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn ghost cart-remove" data-id="${ci.id}">Remove</button>
+          </div>`;
+        cartItems.appendChild(node);
+      });
+      // handlers
+      cartItems.querySelectorAll('.cart-remove').forEach(b=>{
+        b.onclick = ()=> {
+          const id = b.dataset.id;
+          const arr = loadLS('rms_cart_v1', []);
+          const idx = arr.findIndex(x=>x.id===id);
+          if(idx>-1) arr.splice(idx,1);
+          saveLS('rms_cart_v1', arr); renderCart(); renderCustomerMenu();
+        };
+      });
+      document.getElementById('placeOrderBtn').onclick = handlePlaceOrder;
+    }
+
+    // initial
+    refresh();
+    renderCart();
+
+    // search & filters
+    search.oninput = refresh;
+    fNon.onclick = () => { filterNon = !filterNon; fNon.style.opacity = filterNon ? '1' : '0.6'; refresh(); };
+    fVeg.onclick = () => { filterVeg = !filterVeg; fVeg.style.opacity = filterVeg ? '1' : '0.6'; refresh(); };
+
+    document.getElementById('openCartBtn').onclick = () => {
+      const c = loadLS('rms_cart_v1', []);
+      if(c.length===0) showToast('Cart is empty'); else showToast('Cart open below');
+      renderCart();
+    };
+
+    updateCategoryButtons();
+  }
+
+  // place order handler (customer)
+  function handlePlaceOrder(){
+    const cart = loadLS('rms_cart_v1', []);
+    if(!cart || cart.length === 0){ showToast('Your cart is empty'); return; }
+    // collect customer name & table
+    const customer = prompt('Your name (optional):','Guest') || 'Guest';
+    // find booked tables for this customer
+    const myBookings = state.tables.filter(t=>t.bookedBy && t.bookedBy.toLowerCase() === customer.toLowerCase());
+    let table = null;
+    if(myBookings.length > 0){
+      table = myBookings[0].number;
+    } else {
+      // attempt to let user choose table
+      const tnum = prompt('Table number (optional) — leave blank for takeaway/dine-in selection','');
+      table = tnum ? Number(tnum) : null;
+    }
+
+    const order = {
+      id: uid('o'),
+      items: cart.map(c=>({ id:c.id, name:c.name, price:c.price, qty:c.qty, image:c.image })),
+      customer,
+      table,
+      time: nowISO(),
+      status: 'pending'
+    };
+    state.orders.unshift(order);
+    saveLS(LS_KEYS.ORDERS, state.orders);
+    // clear cart
+    saveLS('rms_cart_v1', []);
+    pushNotif(`New order from ${customer}`); // admin notif (visible to admin only)
+    showToast('Order placed — thank you!', 3000);
+    renderCustomerMenu();
+  }
+
+  // ---- Customer: Book Table
+  function renderCustomerBook(){
+    custContentArea.innerHTML = `<div class="card">
+      <h3>Book Table</h3>
+      <div style="height:12px"></div>
+      <div id="custTables" class="tables-grid"></div>
+      <div style="height:8px"></div>
+      <div style="display:flex;justify-content:flex-end;"><button id="confirmBooking" class="btn">Book selected</button></div>
+    </div>`;
+
+    const grid = document.getElementById('custTables');
+    grid.innerHTML = '';
+    let selected = new Set();
+    state.tables.forEach(t=>{
+      const el = document.createElement('div');
+      el.className = 'table-card' + (t.bookedBy ? ' booked' : '');
+      el.tabIndex = 0;
+      el.setAttribute('role','button');
+      el.dataset.id = t.id;
+      el.innerHTML = `<div style="font-weight:800;">Table ${t.number}</div>
+                      <div class="muted" style="font-size:12px;">${t.bookedBy ? `Booked` : 'Available'}</div>`;
+      if(!t.bookedBy){
+        el.onclick = ()=> {
+          if(selected.has(t.id)) { selected.delete(t.id); el.style.outline='none'; el.style.boxShadow='var(--shadow)'; }
+          else { selected.add(t.id); el.style.outline='4px solid rgba(154,211,245,0.3)'; }
+        };
+      }
+      grid.appendChild(el);
+    });
+
+    document.getElementById('confirmBooking').onclick = ()=>{
+      if(selected.size === 0){ showToast('Please select at least one available table'); return; }
+      const name = prompt('Your name for booking:', 'Guest') || 'Guest';
+      selected.forEach(id=>{
+        const t = state.tables.find(x=>x.id===id);
+        if(t){ t.bookedBy = name; t.bookedAt = nowISO(); }
+      });
+      persistAll(); pushNotif(`${name} booked ${selected.size} table(s)`); showToast(`Booked ${selected.size} table(s)`, 3000);
+      renderCustomerBook();
+    };
+  }
+
+  // ---- Customer: Reviews
+  function renderCustomerReviews(){
+    custContentArea.innerHTML = `<div class="card">
+      <h3>Leave a Review</h3>
+      <div style="height:8px"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="starSelector" role="radiogroup" aria-label="Rating">
+          <button class="btn ghost star" data-value="1">★</button>
+          <button class="btn ghost star" data-value="2">★</button>
+          <button class="btn ghost star" data-value="3">★</button>
+          <button class="btn ghost star" data-value="4">★</button>
+          <button class="btn ghost star" data-value="5">★</button>
+        </div>
+        <div class="spacer"></div>
+      </div>
+      <div style="height:12px"></div>
+      <label>Your name (optional)</label>
+      <input type="text" id="rv_name" placeholder="Name (optional)"/>
+      <label style="margin-top:6px">Comment</label>
+      <textarea id="rv_text" rows="4" placeholder="Share your experience"></textarea>
+      <div style="height:12px"></div>
+      <div style="display:flex;gap:8px;">
+        <button id="rv_submit" class="btn">Submit</button>
+        <button id="rv_cancel" class="btn secondary">Cancel</button>
+      </div>
+    </div>`;
+
+    let rating = 5;
+    const stars = document.querySelectorAll('#starSelector .star');
+    stars.forEach(s=>{
+      s.onclick = ()=> {
+        rating = Number(s.dataset.value);
+        // visual update
+        stars.forEach(x=> x.style.opacity = Number(x.dataset.value) <= rating ? '1' : '0.5');
+      };
+    });
+    document.getElementById('rv_submit').onclick = ()=>{
+      const name = document.getElementById('rv_name').value.trim() || 'Guest';
+      const comment = document.getElementById('rv_text').value.trim();
+      const review = { id: uid('r'), rating, comment, customer:name, time: nowISO() };
+      state.reviews.unshift(review); persistAll(); showToast('Thanks for your review', 3000); renderCustomerReviews();
+    };
+    document.getElementById('rv_cancel').onclick = ()=> renderCustomerReviews();
+  }
+
+  // ---- Utilities: toast messages
+  function showToast(msg, duration=2000){
+    const existing = document.getElementById('rms_toast');
+    if(existing) existing.remove();
+    const t = document.createElement('div');
+    t.id='rms_toast';
+    t.style.position='fixed';
+    t.style.bottom='20px';
+    t.style.left='50%';
+    t.style.transform='translateX(-50%)';
+    t.style.padding='10px 16px';
+    t.style.borderRadius='12px';
+    t.style.background='rgba(10,20,25,0.92)';
+    t.style.color='#fff';
+    t.style.zIndex='9999';
+    t.style.boxShadow='0 12px 30px rgba(0,0,0,0.15)';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, duration);
+  }
+
+  // ---- Helpers
+  function escapeHtml(s){
+    if(!s) return '';
+    return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+  }
+
+  // ---- Wiring buttons and keyboard accessibility
+  function wireUI(){
+    // Home buttons keyboard/activation
+    [btnAdmin, btnCustomer].forEach(btn=>{
+      btn.onclick = () => {
+        if(btn.id === 'btnAdmin') openAdminLogin();
+        else {
+          // show welcome then dashboard after 3s
+          showView(customerWelcome);
+          setTimeout(()=> {
+            renderCustomerMenu(); showView(customerDashboard);
+          }, 3000);
+        }
+      };
+      btn.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' ') btn.click(); };
+    });
+
+    // Admin login dialog buttons
+    adminLoginForm.onsubmit = handleAdminLogin;
+    adminCancelBtn.onclick = closeAdminLogin;
+
+    // Admin page navigation
+    adminOrdersBtn.onclick = renderAdminOrders;
+    adminMenuBtn.onclick = renderAdminMenu;
+    adminTablesBtn.onclick = renderAdminTables;
+    adminReviewsBtn.onclick = renderAdminReviews;
+    adminNotifsBtn.onclick = openAdminNotifs;
+
+    adminLogoutBtn.onclick = ()=> { isAdmin = false; headerNotifWrapper.style.display = 'none'; showView(homeView); updateNotifBadge(); };
+    adminBackHome.onclick = ()=> { showView(homeView); };
+
+    // Customer nav
+    custMenuBtn.onclick = ()=> { renderCustomerMenu(); showView(customerDashboard); };
+    custBookBtn.onclick = ()=> { renderCustomerBook(); showView(customerDashboard); };
+    custReviewsBtn.onclick = ()=> { renderCustomerReviews(); showView(customerDashboard); };
+    custBackHome.onclick = ()=> { showView(homeView); };
+
+    // notifications (header bell)
+    openNotifs.onclick = ()=> {
+      if(!isAdmin) return;
+      if(notifList.style.display === 'block') hideNotifPopup(); else showNotifPopup();
+    };
+
+    // export/import/reset
+    exportBtn.onclick = ()=> {
+      const data = { menu: state.menu, orders: state.orders, tables: state.tables, reviews: state.reviews };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rms-export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+    importBtn.onclick = ()=> {
+      const data = prompt('Paste menu JSON to import (will replace current menu):');
+      try {
+        const parsed = JSON.parse(data || '{}');
+        if(Array.isArray(parsed.menu)) state.menu = parsed.menu;
+        if(Array.isArray(parsed.orders)) state.orders = parsed.orders;
+        if(Array.isArray(parsed.tables)) state.tables = parsed.tables;
+        if(Array.isArray(parsed.reviews)) state.reviews = parsed.reviews;
+        persistAll(); showToast('Import applied'); renderAdminMenu();
+      } catch (e){ alert('Invalid JSON'); }
+    };
+    resetBtn.onclick = ()=> {
+      if(!confirm('Reset demo data to defaults?')) return;
+      localStorage.removeItem(LS_KEYS.MENU);
+      localStorage.removeItem(LS_KEYS.ORDERS);
+      localStorage.removeItem(LS_KEYS.TABLES);
+      localStorage.removeItem(LS_KEYS.REVIEWS);
+      localStorage.removeItem(LS_KEYS.NOTIFS);
+      seedDataIfNeeded();
+      showView(homeView);
+      showToast('Demo reset');
+    };
+
+    // accessibility for admin login open
+    btnAdmin.onkeyup = (e)=> { if(e.key==='Enter') openAdminLogin(); };
+    // basic keyboard: Escape hides notifications / modals
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        hideNotifPopup();
+        closeAdminLogin();
+      }
+    });
+  }
+
+  // ---- Start
+  seedDataIfNeeded();
+  applyImagePlaceholders(); // ensures img placeholders used
+  wireUI();
+
+  // expose some functions to global for debugging / future extension
+  window.rms = {
+    state,
+    persistAll,
+    pushNotif
+  };
+
+  // helper: show home on load
+  showView(homeView);
+
+  // ensure notifications count reflect stored notifs on load
+  headerNotifWrapper.style.display = 'none';
+  updateNotifBadge();
+
+  // small helper to show admin login when clicking admin image
+  btnAdmin.addEventListener('click', (e)=> openAdminLogin());
+
+  // Accessibility: focus visible on keyboard navigation
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Tab') document.body.classList.add('user-is-tabbing');
+  });
+
+})();
+</script>
+</div>
+</body>
+</html>
